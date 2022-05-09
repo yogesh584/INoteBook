@@ -4,6 +4,7 @@ connection();
 
 // EXPRESS SPECIFIC STUFF
 const app = express();
+app.use(express.json());             // For Getting Json data form User
 
 // ROUTES
 app.use('/api/auth',require('./routes/auth'));
