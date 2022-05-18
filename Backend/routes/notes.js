@@ -18,10 +18,27 @@ router.get("/getallnotes",fetchuser,async (req,res)=>{
     }
 });
 
+// GET ONLY ONE NOTE
+router.get("/getanote/:id",fetchuser,async (req,res)=>{
+    try {
+        let note = await notesModel.findById(req.params.id);
+        
+        if(!note){ return res.statusCode(404).send("Not Found")};
+        if(note.user.toString() !== req.user.id){
+            return res.statusCode(401).send("Not Allowed");
+        }
+
+        res.json(note);
+    } catch (error) {
+        console.error(error);
+        res.send("Some Error Occured!");
+    }
+}); 
+
 // CREATE NEW NOTE
 router.post("/addnote",[
-    body("title","Enter a valid title").isLength({min: 10}),
-    body("description","Description must be atleast 10 char").isLength({min: 10})
+    body("title","Enter a valid title").isLength({min: 3}),
+    body("description","Description must be atleast 10 char").isLength({min: 5})
 ],fetchuser,async (req,res)=>{
     //  CHECKING ERRORS
     const errors = validationResult(req);
@@ -43,18 +60,18 @@ router.post("/addnote",[
 
 // UPDATING A NOTE USING PUT REQUEST
 router.put("/updatenote/:id",fetchuser,async (req,res)=>{
-    const {title,description,tag} = req.body;
+    const {title,desc,tag} = req.body;
     try {
         let updateNote = {};
         if(title){updateNote.title = title}
-        if(description){updateNote.desc = description}
+        if(desc){updateNote.desc = desc}
         if(tag){updateNote.tag = tag}
     
         let note = await notesModel.findById(req.params.id);
-        if(!note){ return res.statusCode(404).send("Not Found")};
+        if(!note){ return res.status(404).send("Not Found")};
     
         if(note.user.toString() !== req.user.id){
-            return res.statusCode(401).send("Not Allowed");
+            return res.status(401).send("Not Allowed");
         }
     
         note = await notesModel.findByIdAndUpdate(req.params.id,{$set: updateNote},{new: true});

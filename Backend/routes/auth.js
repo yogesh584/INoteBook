@@ -16,17 +16,19 @@ router.post('/',[
     body('password',"Password must be at least five Characters").isLength({min: 5})
 ],async (req,res)=>{
     //  CHECKING ERRORS
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json({errors: errors.array()})
+    let success = false;
+    let error = validationResult(req);
+    if(!error.isEmpty()){
+        return res.status(400).json({success,error: error.array()})
     }
+
     try {
         const UserData = req.body;
     
         // CHECKING USER EXISTINCE (BY EMAIL)
         let user = await userModel.findOne({"email":UserData.email});
         if(user){
-            return res.status(400).json({error : "User with This email already Exist!"})
+            return res.status(400).json({success,error : "User with This email already Exist!"})
         }
 
         // GENRATING SECURE HASH
@@ -48,12 +50,13 @@ router.post('/',[
         }
 
         const authToken = jwt.sign(userData,process.env.JWT_SECRET);
-        res.json({authToken: authToken});
+        success = true;
+        res.json({success,authToken: authToken});
 
 
     } catch (error) {
         console.error(error);
-        res.send("Some Error Occured!");
+        res.send({success,error: "Some Error Occured!"});
     }
 });
 
@@ -63,10 +66,11 @@ router.post("/login",[
     body('email',"Please Enter a valid Email").isEmail(),
     body('password',"Password must be at least five Characters").isLength({min: 5})
 ],async (req,res)=>{
+    let success = false;
     //  CHECKING ERRORS
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json({errors: errors.array()})
+    let error = validationResult(req);
+    if(!error.isEmpty()){
+        return res.status(400).json({success,errors: error.array()})
     }
 
     try {
@@ -74,12 +78,12 @@ router.post("/login",[
         let user = await userModel.findOne({email: email});
 
         if(!user){
-            return res.status(400).json({error: "Please Enter a valid email or password"});
+            return res.status(400).json({success,error: "Please Enter a valid email or password"});
         }
 
         const isPasswordCompared = await bcrypt.compare(password,user.password);
         if(!isPasswordCompared){
-            return res.status(400).json({error: "Please Enter a valid email or password"});
+            return res.status(400).json({success,error: "Please Enter a valid email or password"});
         }
 
         // CREATING JSONWEBTOKEN
@@ -90,7 +94,8 @@ router.post("/login",[
         }
 
         const authToken = jwt.sign(userData,process.env.JWT_SECRET);
-        res.json({authToken: authToken});
+        success = true;
+        res.json({success,authToken: authToken});
         
     } catch (error) {
         console.error(error);
